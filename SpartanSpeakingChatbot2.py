@@ -1,127 +1,235 @@
-
-import pgzrun
-import pygame
-import pgzero
-from pgzero.builtins import Actor
-from random import randint
-import smtplib
-import ssl
-from openpyxl import *
-import time
-from sys import exit
+import pyttsx3
+import datetime
+import wikipedia
+import webbrowser
 import os
-os.environ['SDL_VIDEO_CENTERED'] = '1'
+import time
+import requests
+from bs4 import BeautifulSoup
+import random
 
-WIDTH = 1280
-HEIGHT = 720
+b = "Spartan: "
+engine = pyttsx3.init('sapi5')
+voices = engine.getProperty('voices')
 
-main_box = Rect(0, 0, 820, 240)
-timer_box = Rect(0, 0, 240, 240)
-answer_box1 = Rect(0, 0, 500, 165)
-answer_box2 = Rect(0, 0, 500, 165)
-answer_box3 = Rect(0, 0, 500, 165)
-answer_box4 = Rect(0, 0, 500, 165)
+# Set English voice
+for voice in voices:
+    if 'English' in voice.name:
+        engine.setProperty('voice', voice.id)
+        break
 
-main_box.move_ip(50, 40)
-timer_box.move_ip(990, 40)
-answer_box1.move_ip(50, 358)
-answer_box2.move_ip(735, 358)
-answer_box3.move_ip(50, 538)
-answer_box4.move_ip(735, 538)
-answer_boxes = [answer_box1, answer_box2, answer_box3, answer_box4]
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
 
-score = 0
-time_left = 15
-
-q1 = ["Which ocean is the largest?",
-      "Atlantic", "Indian", "Arctic", "Pacific", 4]
-
-q2 = ["When is Christmas?", "December 24", "January 1", "December 25", "November 25", 3]
-
-q3 = ["What is 8+5=?",
-      "10", "11", "12", "13", 4]
-
-q4 = ["What is the letter after D?",
-      "F", "E", "B", "C", 2]
-
-q5 = ["What is the tallest building in the world (as of 2025)?", 
-      "Burj Khalifa", "Shanghai Tower", "Jeddah Tower", "One World Trade Center", 1]
-
-q6 = ["What is a quarter of 200?", "50", "100", "25", "150", 1]
-
-q7 = ["How many kilometers are there in one mile?",
-      "1.2", "1.6", "1.5", "1.7", 2]
-
-q8 = ["Which of the following is NOT a metric unit?", "meter", "mile", "Celcius", "kilogram", 2]
-
-q9 = ["Which planet do we live on?", "Mars", "Earth", "Sun", "Moon", 2]
-
-q10 = ["Which time we use in the summer?", "Daylight Saving", "Standard", "East", "Mountain", 1]
-
-questions = [q1, q2, q3, q4, q5, q6, q7, q8, q9, q10]
-question = questions.pop(0)
-
-
-def draw():
-    screen.fill("light cyan")
-    screen.draw.filled_rect(main_box, "light green")
-    screen.draw.filled_rect(timer_box, "light cyan")
-
-    for box in answer_boxes:
-        screen.draw.filled_rect(box, "light gray")
-        screen.draw.textbox(str(time_left), timer_box, color=("black"))
-        screen.draw.textbox(question[0], main_box, color=("black"))
-
-    index = 1
-    for box in answer_boxes:
-        screen.draw.textbox(question[index], box, color=("black"))
-        index = index + 1
-
-
-def game_over():
-    global question, time_left
-    message = "Game over. You got %s questions correct" % str(score)
-    question = [message, "-", "-", "-", "-", 5]
-    time_left = 0
-
-
-def correct_answer():
-    global question, score, time_left
-
-    score = score + 1
-    if questions:
-        question = questions.pop(0)
-        time_left = 15
+def greetings():
+    h = int(datetime.datetime.now().hour)
+    if 8 < h < 12:
+        print(b, 'Good Morning. My name is Spartan. Version 1.00')
+        speak('Good morning. My name is Spartan. Version 1.00')
+    elif 12 <= h < 17:
+        print(b, "Good afternoon. My name is Spartan. Version 1.00")
+        speak('Good afternoon. My name is Spartan. Version 1.00')
     else:
-        print("End of questions")
-        game_over()
+        print(b, 'Good evening! My name is Spartan. Version 1.00')
+        speak('Good evening. My name is Spartan. Version 1.00')
+    print(b, 'How can I help you, EE104?')
+    speak('How can I help you, EE104?')
 
+motiv = "Sometimes later becomes never. Do it now. EE104, I believe you, you have made me."
+need_list = ['EE104, what can I do for you?', 'Do you want something else?', 'EE104, give me questions or tasks',
+             'I want to take time with you, do you want to know something else?', 'EE104, what is on your mind?',
+             'I can not think like you-humans, but can give answer your all questions',
+             "Let's discover this world! What do you want to learn today?"]
+sorry_list = ['EE104, I am sorry I dont know the answer', 'I dont have an idea about it, EE104', 'Sorry, EE104! try again']
+bye_list = ['Good bye, EE104. I will miss you', 'See you EE104', 'Bye, dont forget I will always be here']
+comic_list = ['It is not a joke, EE104. I was serious', 'Do you think that it is a joke? Be nice!']
+greet_list = ['Hi EE104', 'Hi my dear']
 
-def on_mouse_down(pos):
-    index = 1
-    for box in answer_boxes:
-        if box.collidepoint(pos):
-            print("Clicked on answer " + str(index))
-            if index == question[5]:
-                print("You got it correct!")
-                correct_answer()
-            else:
-                game_over()
-        index = index + 1
+def weather_Spartan(city):
+    try:
+        city = city.replace('weather', '')
+        url = "https://www.google.com/search?q=" + "weather" + city
+        html = requests.get(url).content
+        soup = BeautifulSoup(html, 'html.parser')
+        temp = soup.find('div', attrs={'class': 'BNeawe iBp4i AP7Wnd'}).text
+        str = soup.find('div', attrs={'class': 'BNeawe tAd8D AP7Wnd'}).text
+        data = str.split('\n')
+        time_val = data[0]
+        sky = data[1]
+        listdiv = soup.findAll('div', attrs={'class': 'BNeawe s3v9rd AP7Wnd'})
+        strd = listdiv[5].text
+        pos = strd.find('Wind')
+        other_data = strd[pos:]
 
+        print("At ", city)
+        print("Temperature is", temp)
+        print("Time: ", time_val)
+        print("Sky Description: ", sky)
+        print(other_data)
+    except Exception as e:
+        print(b, f"Error: {e}")
+        sorry = random.choice(sorry_list)
+        print(b, sorry)
+        speak(sorry)
 
-def on_key_up(key):
-    if key == keys.H:
-        print("The correct answer is box number %s " % question[5])
+def takeCommand():
+    while True:
+        print(" ")
+        query = input("EE104: ").lower()
 
+        if 'who is' in query:
+            try:
+                query = query.replace('who is', '')
+                result = wikipedia.summary(query, sentences=2)
+                print(b, result)
+                speak(result)
+                need = random.choice(need_list)
+                print(b, need)
+                speak(need)
+            except Exception as e:
+                print(b, f"Error: {e}")
+                sorry = random.choice(sorry_list)
+                print(b, sorry)
+                speak(sorry)
 
-def update_time_left():
-    global time_left
-    if time_left:
-        time_left = time_left - 1
-    else:
-        game_over()
+        elif 'what is' in query:
+            try:
+                query = query.replace('what is', '')
+                result = wikipedia.summary(query, sentences=2)
+                print(b, result)
+                speak(result)
+                need = random.choice(need_list)
+                print(b, need)
+                speak(need)
+            except Exception as e:
+                print(b, f"Error: {e}")
+                sorry = random.choice(sorry_list)
+                print(b, sorry)
+                speak(sorry)
 
+        elif 'weather' in query:
+            weather_Spartan(query)
+            need = random.choice(need_list)
+            print(b, need)
+            speak(need)
 
-clock.schedule_interval(update_time_left, 1.0)
-pgzrun.go()
+        elif 'play' in query:
+            query = query.replace('play', '')
+            url = 'https://www.youtube.com/results?search_query=' + query
+            webbrowser.open(url)
+            time.sleep(2)
+            speak('There are a lot of music, select one.')
+            time.sleep(3)
+            need = random.choice(need_list)
+            print(b, need)
+            speak(need)
+
+        elif 'open' in query:
+            try:
+                website = query.split('open')[1].strip()
+                url_dict = {
+                    'github': 'https://github.com/',
+                    'youtube': 'https://www.youtube.com/',
+                    'google': 'https://www.google.com/',
+                    'facebook': 'https://www.facebook.com/',
+                    'sjsu': 'https://www.sjsu.edu/'
+                }
+                if website in url_dict:
+                    webbrowser.open(url_dict[website])
+                    print(b, f"Opening {website}...")
+                    speak(f"Opening {website}")
+                else:
+                    print(b, "Sorry, I don't know this website.")
+                    speak("Sorry, I don't know this website.")
+                need = random.choice(need_list)
+                print(b, need)
+                speak(need)
+            except Exception as e:
+                print(b, f"Error: {e}")
+                sorry = random.choice(sorry_list)
+                print(b, sorry)
+                speak(sorry)
+
+        elif 'what time is it' in query:
+            now = datetime.datetime.now().strftime('%H:%M:%S')
+            print(b, f"The current time is {now}")
+            speak(f"The current time is {now}")
+            need = random.choice(need_list)
+            print(b, need)
+            speak(need)
+
+        elif 'motivate' in query:
+            print(b, motiv)
+            speak(motiv)
+
+        elif 'quote' in query:
+            quote_list = [
+                "The best way to predict the future is to invent it. — Alan Kay",
+                "Life is 10% what happens to us and 90% how we react to it. — Charles Swindoll",
+                "Your time is limited, don't waste it living someone else's life. — Steve Jobs",
+                "The only way to do great work is to love what you do. — Steve Jobs",
+                "Success is not final, failure is not fatal: It is the courage to continue that counts. — Winston Churchill"
+            ]
+            quote = random.choice(quote_list)
+            print(b, quote)
+            speak(quote)
+
+        elif 'help' in query:
+            help_text = """
+Here are the commands you can use:
+- who is [person]: Search Wikipedia information.
+- what is [topic]: Search Wikipedia topic.
+- weather [city]: Check the weather in a city.
+- play [music]: Search music on YouTube.
+- open [website]: Open GitHub, YouTube, Google, Facebook, or SJSU.
+- what time is it: Tell the current time.
+- motivate: Give a motivational quote.
+- quote: Give a random inspirational quote.
+- hello: Greeting from Spartan.
+- bye / exit: Exit the program.
+- haha: Funny reply.
+- facebook: Open Facebook friend requests.
+- shutdown laptop: Shutdown your computer (⚠️ Be careful!)
+"""
+            print(b, help_text)
+            speak("Here are the commands you can use. Please read the terminal window.")
+
+        elif 'hello' in query:
+            greet = random.choice(greet_list)
+            print(b, greet)
+            speak(greet)
+
+        elif 'haha' in query:
+            comic = random.choice(comic_list)
+            print(b, comic)
+            speak(comic)
+
+        elif 'facebook' in query:
+            url2 = 'https://www.facebook.com/friends/requests/?fcref=jwl'
+            webbrowser.open(url2)
+
+        elif 'shutdown laptop' in query:
+            os.system("shutdown /s /t 1")
+
+        elif query == 'exit' or query == 'bye':
+            bye = random.choice(bye_list)
+            print(b, bye)
+            speak(bye)
+            break
+
+        else:
+            sorry = random.choice(sorry_list)
+            print(b, sorry)
+            speak(sorry)
+
+time.sleep(2)
+print('Initializing...')
+time.sleep(2)
+print('Spartan is preparing...')
+time.sleep(2)
+print('Environment is building...')
+time.sleep(2)
+greetings()
+takeCommand()
+
